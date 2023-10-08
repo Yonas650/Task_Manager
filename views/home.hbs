@@ -1,12 +1,26 @@
 <h2>My Tasks:</h2>
+<form action="/" method="GET">
+   <input type="text" name="titleQ" placeholder="Search by Title">
+   <input type="text" name="tagQ" placeholder="Search by Tag">
+    <input type="submit" value="Search"> <input type="reset" value="Clear All" onclick="window.location.href='/'">
+</form>
+
 <table>
     <thead>
         <tr>
             <th>Pinned</th>
             <th>Progress</th>
             <th>Title</th>
-            <th>Due Date</th>
-            <th>Priority</th>
+            <th>
+                Due Date 
+                <a href="/?sort-by=due-date&sort-order=asc">⬆️</a> 
+                <a href="/?sort-by=due-date&sort-order=desc">⬇️</a>
+             </th>
+            <th>
+                Priority
+                <a href="/?sort-by=priority&sort-order=asc">⬆️</a> 
+                <a href="/?sort-by=priority&sort-order=desc">⬇️</a>
+                </th>
             <th>Tags</th>
         </tr>
     </thead>
