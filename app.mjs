@@ -5,7 +5,7 @@ import {readFile, readdir} from 'fs';
 import {fileURLToPath} from 'url';
 import * as path from 'path';
 import {Task} from './task.mjs';
-
+import {promisify} from 'util';
 const app = express();
 // set hbs engine
 app.set('view engine', 'hbs');
@@ -22,6 +22,24 @@ let taskList = [];
 
 // The reading path
 const readingPath = path.resolve(__dirname, './saved-tasks');
+const readFileAsync = promisify(readFile);
+const readdirAsync = promisify(readdir);
+
+async function loadTasksFromFiles() {
+  try {
+    const filenames = await readdirAsync(readingPath);
+    const tasks = await Promise.all(
+      filenames.map(filename => 
+        readFileAsync(path.join(readingPath, filename), 'utf-8')
+        .then(content => JSON.parse(content))
+      )
+    );
+    return tasks.map(taskData => new Task(taskData));
+  } catch (err) {
+    console.error('Error reading tasks:', err);
+    return [];
+  }
+}
 
 /**
  * This function sort tasks by the give criteria "sort-by" and "sort-order"
@@ -83,8 +101,27 @@ function sortTasks(req, l) {
 function pinnedTasks(l) {
   return [...l].sort((a, b)=>b.pinned-a.pinned);
 }
-app.get('/', (req, res) => {
-  res.render('home');
+app.get('/', async(req, res) => {
+  try {
+      const tasks = await loadTasksFromFiles();
+      
+      // Filtering
+      let filteredTasks = tasks;
+      if(req.query.titleQ) {
+          filteredTasks = filteredTasks.filter(task => task.title.includes(req.query.titleQ));
+      }
+      if(req.query.tagQ) {
+          filteredTasks = filteredTasks.filter(task => task.tags && task.tags.includes(req.query.tagQ));
+      }
+
+      // Sorting
+      const sortedTasks = sortTasks(req, filteredTasks); 
+
+      res.render('home', { tasks: sortedTasks });
+  } catch (err) {
+      console.error('Error loading tasks:', err);
+      res.status(500).send('Server Error');
+  }
 });
 
 app.listen(3000);

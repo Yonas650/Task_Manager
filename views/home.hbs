@@ -1,1 +1,33 @@
 <h2>My Tasks:</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Pinned</th>
+            <th>Progress</th>
+            <th>Title</th>
+            <th>Due Date</th>
+            <th>Priority</th>
+            <th>Tags</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each tasks}}
+        <tr>
+            <td>
+                {{#if this.pinned}}
+                    📌
+                {{/if}}
+            </td>
+            <td>{{this.progress}}</td>
+            <td>{{this.title}}</td>
+            <td>{{this.due-date}}</td>
+            <td>{{this.priority}}</td>
+            <td>
+                {{#each this.tags}}
+                    <span class="tag">{{this}}</span>
+                {{/each}}
+            </td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
