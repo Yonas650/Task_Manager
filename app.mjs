@@ -7,6 +7,7 @@ import * as path from 'path';
 import {Task} from './task.mjs';
 import {promisify} from 'util';
 const app = express();
+app.use(express.urlencoded({ extended: true }));
 // set hbs engine
 app.set('view engine', 'hbs');
 
@@ -103,25 +104,62 @@ function pinnedTasks(l) {
 }
 app.get('/', async(req, res) => {
   try {
-      const tasks = await loadTasksFromFiles();
-      
-      // Filtering
-      let filteredTasks = tasks;
-      if(req.query.titleQ) {
-          filteredTasks = filteredTasks.filter(task => task.title.includes(req.query.titleQ));
-      }
-      if(req.query.tagQ) {
-          filteredTasks = filteredTasks.filter(task => task.tags && task.tags.includes(req.query.tagQ));
-      }
-
-      // Sorting
-      const sortedTasks = sortTasks(req, filteredTasks); 
-
-      res.render('home', { tasks: sortedTasks });
-  } catch (err) {
-      console.error('Error loading tasks:', err);
-      res.status(500).send('Server Error');
-  }
+    // 1. Load the tasks from files
+    const tasksFromFiles = await loadTasksFromFiles();
+    
+    // 2. Combine them with tasks from the memory
+    const combinedTasks = [...tasksFromFiles, ...taskList];
+    console.log("Combined Tasks:", combinedTasks);
+    console.log("All Task Titles:", combinedTasks.map(task => task.title));
+    
+    // 3. Use this combined list for subsequent operations
+    let filteredTasks = combinedTasks;
+    if(req.query.titleQ) {
+      const searchTitle = req.query.titleQ.toLowerCase();
+      filteredTasks = filteredTasks.filter(task => task.title.toLowerCase().includes(searchTitle));
+      console.log("Filtered Task Titles:", filteredTasks.map(task => task.title));
+    }
+    if(req.query.tagQ) {
+      const searchTag = req.query.tagQ.toLowerCase();
+      filteredTasks = filteredTasks.filter(task => task.tags && task.tags.some(tag => tag.toLowerCase().includes(searchTag)));
+    }
+ 
+    // Sorting
+    const pinnedSortedTasks = pinnedTasks(filteredTasks);
+    const sortedTasks = sortTasks(req, pinnedSortedTasks); 
+    res.render('home', { tasks: sortedTasks });
+} catch (err) {
+    console.error('Error loading tasks:', err);
+    res.status(500).send('Server Error');
+}
 });
+
+app.get('/add', (req, res) => {
+  res.render('newtask');
+});
+app.post('/add', (req, res) => {
+  // Access the form data using req.body
+  const taskData = req.body;
+  
+  // Convert the "pinned" value from the radio buttons to a boolean
+  taskData.pinned = taskData.pinned === 'true';
+
+  // Convert priority to an integer
+  taskData.priority = parseInt(taskData.priority, 10);
+
+  // Split the tags string into an array of tags
+  if (taskData.tags) {
+    taskData.tags = taskData.tags.split(',').map(tag => tag.trim());
+  } else {
+    taskData.tags = [];
+  }
+
+  const newTask = new Task(taskData);
+  taskList.push(newTask);
+
+  res.redirect('/');
+});
+
+
 
 app.listen(3000);
