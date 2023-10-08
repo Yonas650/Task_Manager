@@ -1,6 +1,6 @@
 // app.mjs
 import express from 'express';
-import {resolve, dirname} from 'path';
+//import {resolve, dirname} from 'path';
 import {readFile, readdir} from 'fs';
 import {fileURLToPath} from 'url';
 import * as path from 'path';
@@ -17,9 +17,9 @@ app.set('view engine', 'hbs');
 // with import.meta.url
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // TODO: use middleware required for reading body
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'public')));
 // The global list to store all tasks to be rendered
-let taskList = [];
+const taskList = [];
 
 // The reading path
 const readingPath = path.resolve(__dirname, './saved-tasks');
