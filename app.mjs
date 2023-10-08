@@ -14,9 +14,9 @@ app.set('view engine', 'hbs');
 // TODO: use middleware to serve static files from public
 // make sure to calculate the absolute path to the directory
 // with import.meta.url
-
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // TODO: use middleware required for reading body
-
+app.use(express.static(path.join(__dirname, 'public')))
 // The global list to store all tasks to be rendered
 let taskList = [];
 
@@ -83,5 +83,8 @@ function sortTasks(req, l) {
 function pinnedTasks(l) {
   return [...l].sort((a, b)=>b.pinned-a.pinned);
 }
+app.get('/', (req, res) => {
+  res.render('home');
+});
 
 app.listen(3000);
